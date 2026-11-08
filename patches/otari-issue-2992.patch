@@ -1,0 +1,144 @@
+diff --git i/src/gateway/services/budgets/_refusals.py w/src/gateway/services/budgets/_refusals.py
+index ab0f532..477c6a6 100644
+--- i/src/gateway/services/budgets/_refusals.py
++++ w/src/gateway/services/budgets/_refusals.py
+@@ -67,6 +67,13 @@ def _usd(amount: Decimal, rounding: str) -> str:
+     return f"${whole}.{fraction.rstrip('0').ljust(2, '0')}"
+ 
+ 
++def user_subject(user_id: str, *, external_id: str | None = None) -> str:
++    """How a refusal names a user: by ``external_id`` for a service key's end user, by ``user_id`` otherwise."""
++    if external_id is not None:
++        return f"End user '{external_id}'"
++    return f"User '{user_id}'"
++
++
+ def refusal_detail(
+     subject: str,
+     blocked: BlockedAxis,
+diff --git i/src/gateway/services/budgets/_reservations.py w/src/gateway/services/budgets/_reservations.py
+index 0ceda3f..95babb0 100644
+--- i/src/gateway/services/budgets/_reservations.py
++++ w/src/gateway/services/budgets/_reservations.py
+@@ -36,7 +36,7 @@ from gateway.repositories.budgets import ApplicableCeiling, HeldAmounts
+ from gateway.repositories.users_repository import get_active_user
+ from gateway.services.budgets import _ledger as ledger
+ from gateway.services.budgets._periods import budget_window
+-from gateway.services.budgets._refusals import BlockedAxis, blocked_on, refusal_detail
++from gateway.services.budgets._refusals import BlockedAxis, blocked_on, refusal_detail, user_subject
+ from gateway.services.budgets._scoped_enforcement import (
+     ApplicableBudget,
+     BudgetScopeRequest,
+@@ -797,7 +797,7 @@ async def reserve_budget(
+     if user.blocked:
+         raise HTTPException(
+             status_code=status.HTTP_403_FORBIDDEN,
+-            detail=f"User '{user_id}' is blocked",
++            detail=f"{user_subject(user_id, external_id=user.external_id)} is blocked",
+             headers=error_codes.error_headers(error_codes.USER_BLOCKED),
+         )
+ 
+@@ -1032,7 +1032,10 @@ async def reserve_budget(
+         )
+         raise _budget_exceeded(
+             refusal_detail(
+-                f"User '{user_id}'",
++                user_subject(
++                    user_id,
++                    external_id=refused_on.external_id if refused_on is not None else user.external_id,
++                ),
+                 blocked,
+                 new_request=new_request,
+                 reserved_output_tokens=reserved_output_tokens,
+diff --git i/tests/unit/test_budget_refusal_detail.py w/tests/unit/test_budget_refusal_detail.py
+index 324e7b9..06d67aa 100644
+--- i/tests/unit/test_budget_refusal_detail.py
++++ w/tests/unit/test_budget_refusal_detail.py
+@@ -1,8 +1,86 @@
+ """The wording of a budget refusal, which tells a spent allowance from a hold that does not fit."""
+ 
+ from decimal import Decimal
++from unittest.mock import AsyncMock, MagicMock
+ 
+-from gateway.services.budgets._refusals import BlockedAxis, blocked_on, refusal_detail
++import pytest
++from fastapi import HTTPException
++
++from gateway.models.budgets import Budget
++from gateway.models.users import User
++from gateway.services.budgets._refusals import BlockedAxis, blocked_on, refusal_detail, user_subject
++from gateway.services.budgets._reservations import reserve_budget
++
++
++def test_user_subject_names_an_end_user_by_external_id() -> None:
++    assert user_subject("u") == "User 'u'"
++    assert user_subject("eu_a886c78298c7419caf4764794945248e", external_id="alice") == "End user 'alice'"
++    blocked = BlockedAxis("budget", remaining=Decimal("0.003747"), held=Decimal("0.008224"))
++    assert refusal_detail(
++        user_subject("eu_a886c78298c7419caf4764794945248e", external_id="alice"),
++        blocked,
++        new_request=True,
++        reserved_output_tokens=8192,
++    ) == (
++        "End user 'alice' has $0.003747 of budget remaining, less than this request's estimated cost of $0.008224. "
++        "The estimate assumes 8192 output tokens; a lower output token limit on the request may let it fit"
++    )
++
++
++@pytest.mark.asyncio
++async def test_reserve_budget_names_end_user_external_id_on_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
++    end_user = User(
++        user_id="eu_a886c78298c7419caf4764794945248e",
++        external_id="alice",
++        spend=Decimal("0.046253"),
++        reserved=Decimal("0"),
++        current_tokens=0,
++        reserved_tokens=0,
++        current_requests=0,
++        reserved_requests=0,
++        blocked=False,
++    )
++    budget = Budget(budget_id="b-1", max_budget=Decimal("0.05"))
++    monkeypatch.setattr(
++        "gateway.services.budgets._reservations._active_user_with_budget",
++        AsyncMock(return_value=(end_user, budget)),
++    )
++    monkeypatch.setattr(
++        "gateway.services.budgets._reservations.get_active_user",
++        AsyncMock(return_value=end_user),
++    )
++    db = AsyncMock()
++    update_result = MagicMock()
++    update_result.rowcount = 0
++    db.execute = AsyncMock(return_value=update_result)
++
++    with pytest.raises(HTTPException) as exc_info:
++        await reserve_budget(
++            db,
++            user_id="eu_a886c78298c7419caf4764794945248e",
++            estimate=Decimal("0.008224"),
++            reserved_output_tokens=8192,
++        )
++
++    assert exc_info.value.status_code == 403
++    assert exc_info.value.detail == (
++        "End user 'alice' has $0.003747 of budget remaining, less than this request's estimated cost of $0.008224. "
++        "The estimate assumes 8192 output tokens; a lower output token limit on the request may let it fit"
++    )
++
++    blocked_end_user = User(
++        user_id="eu_a886c78298c7419caf4764794945248e",
++        external_id="alice",
++        blocked=True,
++    )
++    monkeypatch.setattr(
++        "gateway.services.budgets._reservations._active_user_with_budget",
++        AsyncMock(return_value=(blocked_end_user, budget)),
++    )
++    with pytest.raises(HTTPException) as blocked_exc:
++        await reserve_budget(db, user_id="eu_a886c78298c7419caf4764794945248e", estimate=Decimal("0.001"))
++    assert blocked_exc.value.status_code == 403
++    assert blocked_exc.value.detail == "End user 'alice' is blocked"
+ 
+ 
+ def test_a_spent_allowance_keeps_its_wording() -> None:

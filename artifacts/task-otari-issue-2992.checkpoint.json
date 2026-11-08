@@ -1,0 +1,32 @@
+{
+  "checkpoint_id": "ckpt_33f275ea19",
+  "created_at": "2026-11-08T14:35:51.130084+00:00",
+  "task_id": "task-otari-issue-2992",
+  "halted_subagent_role": "coder",
+  "end_user_id": "subagent:coder",
+  "budget_id": "subagent-coder-budget",
+  "max_budget_usd": "0.001750",
+  "spend_usd": "0.001529",
+  "remaining_usd": "0.000221",
+  "utilization_pct": 87.37,
+  "required_hold_usd": "0.000216",
+  "next_budget_reset_at": "2026-11-09T14:35:51.106539+00:00",
+  "last_idempotency_key": "idem-task-otari-issue-2992-step-8",
+  "completed_steps": [
+    "Architect: Root-cause analysis & surgical fix plan (DeepSeek-R1) — Selected primary open-weight model deepseek:deepseek-r1 (optimal tier, max_tokens=900, estimated hold $0.002096).",
+    "Researcher: Otari Web Search + Web Fetch synthesis (Llama-3.3-70B) — Selected primary open-weight model together:meta-llama/Llama-3.3-70B-Instruct (optimal tier, max_tokens=900, estimated hold $0.000522).",
+    "Coder Phase 1: MCP repo inspection & patch synthesis (Qwen2.5-Coder-32B) — Selected primary open-weight model together:Qwen/Qwen2.5-Coder-32B-Instruct (optimal tier, max_tokens=1650, estimated hold $0.001044).",
+    "Coder Phase 2: Unit test generation & Otari sandbox execution (Qwen2.5-Coder-32B) — Selected primary open-weight model together:Qwen/Qwen2.5-Coder-32B-Instruct (right_sized tier, max_tokens=1645, estimated hold $0.001032).",
+    "Coder Phase 3: Auto-downgraded (>75% watermark) to Mistral-Small-24B + clamped hold — Budget utilization 79.0% >= 75% watermark: downgraded together:Qwen/Qwen2.5-Coder-32B-Instruct -> mistral:mistral-small-24b-instruct-2501 and right-sized max_tokens 1500 -> 1024 (hold $0.000218 <= $0.000367 remaining).",
+    "Verifier: Final diff & regression suite sign-off (Mistral-Small-24B) — Selected primary open-weight model mistral:mistral-small-24b-instruct-2501 (optimal tier, max_tokens=800, estimated hold $0.000172)."
+  ],
+  "pending_steps": [
+    "Optional property-based fuzzing benchmark suite (deferred to next budget window)"
+  ],
+  "partial_artifacts": {
+    "patch_file": "patches/otari-issue-2992.patch",
+    "unit_tests": "tests/unit/test_budget_refusal_detail.py (8 passed)",
+    "normalized_otari_refusal": "End user 'subagent:coder' has $0.000221 of budget remaining, less than this request's estimated cost of $0.000422. The estimate assumes 2048 output tokens; a lower output token limit on the request may let it fit"
+  },
+  "resume_command": "otari-finops-guard resume --checkpoint task-otari-issue-2992.checkpoint.json"
+}
