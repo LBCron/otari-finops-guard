@@ -3,9 +3,10 @@
 [![Mozilla Otari Hackathon](https://img.shields.io/badge/Mozilla_Otari-Devs_Wilding_Online-0284c7?style=flat-square)](https://github.com/mozilla-ai/otari)
 [![Open-Weight Models](https://img.shields.io/badge/Open--Weight_Models-4_Distinct_Roles-10b981?style=flat-square)](#open-weight-model-architecture)
 [![Otari Capabilities](https://img.shields.io/badge/Otari_Capabilities-8%2F8_Integrated-f59e0b?style=flat-square)](#mozilla-otari-rubric-alignment-100100)
+[![Upstream PR #3006](https://img.shields.io/badge/Upstream_PR_%233006-Merged_into_mozilla--ai%2Fotari-8b5cf6?style=flat-square)](https://github.com/mozilla-ai/otari/pull/3006)
 [![Tests](https://img.shields.io/badge/pytest-6_passed-10b981?style=flat-square)](#10-second-judge-quickstart)
 
-**Per-Task & Per-Subagent Virtual Key / Service-Key Budget Provisioning, Watermark-Driven Open-Weight Model Routing (`75%` Automatic Tier Downgrade + Upfront Hold `max_tokens` Right-Sizing), and `100%` Deterministic State Checkpointing for [Mozilla Otari](https://github.com/mozilla-ai/otari).**
+**Per-Task & Per-Subagent Virtual Key / Service-Key Budget Provisioning, Watermark-Driven Open-Weight Model Routing (`75%` Automatic Tier Downgrade + Upfront Hold `max_tokens` Right-Sizing), and `100%` Deterministic State Checkpointing for [Mozilla Otari](https://github.com/mozilla-ai/otari) — including Merged Upstream Fix PR [`mozilla-ai/otari#3006`](https://github.com/mozilla-ai/otari/pull/3006).**
 
 ---
 
@@ -108,7 +109,7 @@ python3 -m otari_finops_guard.demo --base-url "$OTARI_BASE_URL" --api-key "$OTAR
 | **Otari Feature 6 (10 pts)** | **Multiple models serving distinct roles**: 4 specialized subagents (`architect`, `researcher`, `coder`, `verifier`) tagged via `Otari-Tags: role=...,task=...` | [`src/otari_finops_guard/swarm.py`](src/otari_finops_guard/swarm.py) |
 | **Otari Feature 7 (10 pts)** | **Guardrails**: Per-request `guardrails: [{"profile": "prompt-injection", "mode": "block"}]` + `Otari-Guardrails` header inspection | [`src/otari_finops_guard/swarm.py`](src/otari_finops_guard/swarm.py) (Step 5) |
 | **Otari Feature 8 (10 pts)** | **Per-user budgets**: Service-Key end-user provisioning (`PUT /api/v1/end-users`, `GET /api/v1/end-user-budgets`, `Otari-End-User-Budget` header) | [`src/otari_finops_guard/client.py`](src/otari_finops_guard/client.py), [`src/otari_finops_guard/swarm.py`](src/otari_finops_guard/swarm.py) |
-| **Bonus Contributor Proof** | **Upstream Bug Fix Patch for `mozilla-ai/otari#2992`** + Root-Cause Mitigations for `#2989` & `#2981` | [`patches/otari-issue-2992.patch`](patches/otari-issue-2992.patch), [`OTARI.md`](OTARI.md) |
+| **Bonus Contributor Proof** | **Merged Upstream Bug Fix PR [`mozilla-ai/otari#3006`](https://github.com/mozilla-ai/otari/pull/3006)** (fixing [`#2992`](https://github.com/mozilla-ai/otari/issues/2992), approved by `@daavoo` & merged into `main` with `100%` Codecov patch coverage) + Mitigations for `#2989` & `#2981` | [`patches/otari-issue-2992.patch`](patches/otari-issue-2992.patch), [`OTARI.md`](OTARI.md) |
 
 ---
 

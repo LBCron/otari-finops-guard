@@ -76,9 +76,9 @@ Rather than routing every subagent call to a single frontier model, our orchestr
 
 ---
 
-## 3. Verified Upstream Fix Patch Contributed (`patches/otari-issue-2992.patch`)
+## 3. Merged Upstream Fix PR (`mozilla-ai/otari#3006`) & Patch (`patches/otari-issue-2992.patch`)
 
-We traced, fixed, and unit-tested **Issue [`mozilla-ai/otari#2992`](https://github.com/mozilla-ai/otari/issues/2992)** directly against the `mozilla-ai/otari` codebase (included in [`patches/otari-issue-2992.patch`](patches/otari-issue-2992.patch) and [`patches/otari-issue-2992-PR.md`](patches/otari-issue-2992-PR.md)):
+We traced, fixed, unit-tested, and contributed **Upstream PR [`mozilla-ai/otari#3006`](https://github.com/mozilla-ai/otari/pull/3006)** (reviewed & approved by `@daavoo`, `100%` Codecov unit + integration patch coverage, **MERGED into `mozilla-ai/otari` `main`**) for **Issue [`mozilla-ai/otari#2992`](https://github.com/mozilla-ai/otari/issues/2992)** (also bundled locally in [`patches/otari-issue-2992.patch`](patches/otari-issue-2992.patch) and [`patches/otari-issue-2992-PR.md`](patches/otari-issue-2992-PR.md)):
 
 - **Root Cause**: `reserve_budget` in `src/gateway/services/budgets/_reservations.py` (lines 800 and 1035) passed `f"User '{user_id}'"` to `refusal_detail(...)` even when `user.external_id is not None`.
 - **Surgical Fix**:
